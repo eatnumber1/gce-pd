@@ -1,0 +1,195 @@
+#!/bin/zsh
+emulate -L zsh
+setopt err_exit warn_create_global no_unset
+#setopt xtrace
+
+readonly PROGNAME=$0
+readonly ARGS="$*"
+
+function set_purpose {
+	jobs -Z "${PROGNAME}[$1] $ARGS"
+}
+set_purpose mounter
+
+function exec_logger {
+	exec command logger -i -t gce-pd "$@" 1>&- 2>&-
+}
+exec 1> >(exec_logger -p user.info) 2> >(exec_logger -p user.warning) 0<&-
+
+readonly FSTYPE=ext4
+
+# TODO(eatnumber1): Check why my path doesn't have this already.
+path+=( /sbin /usr/sbin /usr/local/sbin )
+
+typeset -a opts_arg
+typeset -A opts
+
+zmodload -F zsh/zutil +b:zparseopts
+zparseopts -D -E o:=opts_arg
+
+() {
+	local opt
+	for opt in "${(s:,:@)opts_arg[2]}"; do
+		typeset -a opt_ary
+		opt_ary=( "${(s:=:@)opt}" )
+		if [[ ${#opt_ary} == 1 ]]; then
+			opt_ary+=( "" )
+		fi
+		opts+=( "${opt_ary[@]}" )
+	done
+}
+
+unset opts_arg
+
+typeset -a mount_args
+() {
+	typeset -a mount_opts
+	for key in "${(k@)opts}"; do
+		case $key in
+			size|help|type) ;;
+			*)
+				typeset -a optarg
+				optarg=( "$key" ${opts[$key]} )
+				mount_opts+=( "${(j:=:)optarg}" )
+				unset "opts[$key]"
+				;;
+		esac
+	done
+
+	if [[ ${#mount_opts} != 0 ]]; then
+		mount_args=( -o "${mount_opts[@]}" )
+	fi
+}
+
+function usage {
+	echo "Usage: $0 [-o help,size=size,type=type,...] disk_name_suffix mountpoint"
+}
+
+if (( ${+opts[help]} )); then
+	usage
+	exit
+fi
+
+if [[ $USERNAME != root ]]; then
+	echo "Must be run as root" >&2
+	exit 1
+fi
+
+if [[ $# -ne 2 ]]; then
+	usage >&2
+	exit 1
+fi
+
+if (( ! ${+opts[size]} )); then
+	echo "The option \"size\" is required." >&2
+	exit 1
+fi
+
+readonly DISK_NAME_SUFFIX="$1"
+readonly MOUNT_POINT=$2
+readonly INSTANCE_NAME="$(hostname)"
+readonly DISK_NAME="${INSTANCE_NAME}-${DISK_NAME_SUFFIX}"
+
+function get_homedir_for {
+	(cd ~$1; echo $PWD)
+}
+
+function as_user_do {
+	setopt err_return
+	(
+		USERNAME=$1
+		shift
+		pushd ~$USERNAME
+		HOME=$PWD
+		popd
+		exec "$@"
+	)
+}
+
+function gcloud {
+	as_user_do gcloudadm command gcloud --quiet "$@"
+}
+
+function get_metadata {
+	curl -qqq -s -H "Metadata-Flavor: Google" "http://metadata.google.internal/computeMetadata/v1/$1"
+}
+
+function get_project {
+	get_metadata "project/project-id"
+}
+
+function get_zone {
+	local z="$(get_metadata "instance/zone")"
+	echo "${z##*/}"
+}
+
+# Usage: disk_exists disk_name
+function disk_exists {
+	local expected_uri="https://www.googleapis.com/compute/v1/projects/$(get_project)/zones/$(get_zone)/disks/$1"
+	gcloud compute disks list --uri | while read -r uri; do
+		if [[ $uri == $expected_uri ]]; then
+			return 0
+		fi
+	done
+	return 1
+}
+
+function has_filesystem {
+	integer ret
+	blkid -n $FSTYPE "$1" >/dev/null || ret=$?
+	case $ret in
+		0|2) return $ret;;
+		*) exit $ret;;
+	esac
+}
+
+readonly LOCK_FILE="/var/lock/gce-pd-$DISK_NAME.lock"
+echo -n > $LOCK_FILE
+
+integer lockfd
+zmodload -F zsh/system +b:zsystem
+
+function acquire_lock {
+	zsystem flock -f lockfd $LOCK_FILE
+}
+
+function release_lock {
+	zsystem flock -u $lockfd
+}
+
+function unmount_listener {
+	set_purpose unmounter
+
+	inotifywait -t 0 -e unmount $MOUNT_POINT
+
+	acquire_lock
+	{
+		gcloud compute instances detach-disk $INSTANCE_NAME --disk $DISK_NAME
+		gcloud compute disks delete $DISK_NAME
+	} always {
+		release_lock
+	}
+}
+
+acquire_lock
+{
+	if ! disk_exists $DISK_NAME; then
+		gcloud compute disks create --size $opts[size] $DISK_NAME
+	fi
+
+	readonly DISK_DEVICE=/dev/disk/by-id/google-$DISK_NAME
+
+	if [[ ! -e $DISK_DEVICE ]]; then
+		gcloud compute instances attach-disk $INSTANCE_NAME --disk $DISK_NAME --device-name $DISK_NAME
+		gcloud compute instances set-disk-auto-delete $INSTANCE_NAME --auto-delete --disk $DISK_NAME &!
+	fi
+
+	if ! has_filesystem $DISK_DEVICE; then
+		mkfs.$FSTYPE -q -F $DISK_DEVICE
+	fi
+
+	mount -t $FSTYPE "${mount_args[@]}" $DISK_DEVICE $MOUNT_POINT
+	(unmount_listener &!) &!
+} always {
+	release_lock
+}

@@ -46,7 +46,7 @@ typeset -a mount_args
 	typeset -a mount_opts
 	for key in "${(k@)opts}"; do
 		case $key in
-			size|help|type) ;;
+			size|help|type|mode) ;;
 			*)
 				typeset -a optarg
 				optarg=( "$key" ${opts[$key]} )
@@ -62,7 +62,7 @@ typeset -a mount_args
 }
 
 function usage {
-	echo "Usage: $0 [-o help,size=size,type=type,...] disk_name_suffix mountpoint"
+	echo "Usage: $0 [-o help,size=size,type=type,mode=octal,...] disk_name_suffix mountpoint"
 }
 
 if (( ${+opts[help]} )); then
@@ -106,8 +106,8 @@ function as_user_do {
 	)
 }
 
-function gbutt {
-	as_user_do gbuttadm command gbutt --quiet "$@"
+function gcloud {
+	as_user_do gcloudadm command gcloud --quiet "$@"
 }
 
 function get_metadata {
@@ -126,7 +126,7 @@ function get_zone {
 # Usage: disk_exists disk_name
 function disk_exists {
 	local expected_uri="https://www.googleapis.com/compute/v1/projects/$(get_project)/zones/$(get_zone)/disks/$1"
-	gbutt compute disks list --uri | while read -r uri; do
+	gcloud compute disks list --uri | while read -r uri; do
 		if [[ $uri == $expected_uri ]]; then
 			return 0
 		fi
@@ -164,8 +164,8 @@ function unmount_listener {
 
 	acquire_lock
 	{
-		gbutt compute instances detach-disk $INSTANCE_NAME --disk $DISK_NAME
-		gbutt compute disks delete $DISK_NAME
+		gcloud compute instances detach-disk $INSTANCE_NAME --disk $DISK_NAME
+		gcloud compute disks delete $DISK_NAME
 	} always {
 		release_lock
 	}
@@ -174,14 +174,14 @@ function unmount_listener {
 acquire_lock
 {
 	if ! disk_exists $DISK_NAME; then
-		gbutt compute disks create --size $opts[size] $DISK_NAME
+		gcloud compute disks create --size $opts[size] $DISK_NAME
 	fi
 
 	readonly DISK_DEVICE=/dev/disk/by-id/google-$DISK_NAME
 
 	if [[ ! -e $DISK_DEVICE ]]; then
-		gbutt compute instances attach-disk $INSTANCE_NAME --disk $DISK_NAME --device-name $DISK_NAME
-		gbutt compute instances set-disk-auto-delete $INSTANCE_NAME --auto-delete --disk $DISK_NAME &!
+		gcloud compute instances attach-disk $INSTANCE_NAME --disk $DISK_NAME --device-name $DISK_NAME
+		gcloud compute instances set-disk-auto-delete $INSTANCE_NAME --auto-delete --disk $DISK_NAME &!
 	fi
 
 	if ! has_filesystem $DISK_DEVICE; then
@@ -189,7 +189,11 @@ acquire_lock
 	fi
 
 	mount -t $FSTYPE "${mount_args[@]}" $DISK_DEVICE $MOUNT_POINT
-	(unmount_listener &!) &!
+	unmount_listener &!
+
+	if (( $+opts[mode] )); then
+		chmod ${opts[mode]} $MOUNT_POINT
+	fi
 } always {
 	release_lock
 }

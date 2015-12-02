@@ -46,7 +46,7 @@ typeset -a mount_args
 	typeset -a mount_opts
 	for key in "${(k@)opts}"; do
 		case $key in
-			size|help|type|mode) ;;
+			size|help|type|chmod) ;;
 			*)
 				typeset -a optarg
 				optarg=( "$key" ${opts[$key]} )
@@ -62,7 +62,7 @@ typeset -a mount_args
 }
 
 function usage {
-	echo "Usage: $0 [-o help,size=size,type=type,mode=octal,...] disk_name_suffix mountpoint"
+	echo "Usage: $0 [-o help,size=size,type=type,chmod=mode,...] disk_name_suffix mountpoint"
 }
 
 if (( ${+opts[help]} )); then
@@ -191,8 +191,8 @@ acquire_lock
 	mount -t $FSTYPE "${mount_args[@]}" $DISK_DEVICE $MOUNT_POINT
 	unmount_listener &!
 
-	if (( $+opts[mode] )); then
-		chmod ${opts[mode]} $MOUNT_POINT
+	if (( $+opts[chmod] )); then
+		chmod ${opts[chmod]} $MOUNT_POINT
 	fi
 } always {
 	release_lock

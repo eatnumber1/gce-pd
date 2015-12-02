@@ -14,7 +14,10 @@ set_purpose mounter
 function exec_logger {
 	exec command logger -i -t gce-pd "$@" 1>&- 2>&-
 }
-exec 1> >(exec_logger -p user.info) 2> >(exec_logger -p user.warning) 0<&-
+
+if [[ ! -t 1 ]]; then
+	exec 1> >(exec_logger -p user.info) 2> >(exec_logger -p user.warning) 0<&-
+fi
 
 readonly FSTYPE=ext4
 
@@ -62,7 +65,7 @@ typeset -a mount_args
 }
 
 function usage {
-	echo "Usage: $0 [-o help,size=size,type=type,chmod=mode,chown=owner,...] disk_name_suffix mountpoint"
+	echo "Usage: $0 [-o help,size=size,type=type,chmod=mode,chown=owner,...] disk_name mountpoint"
 }
 
 if (( ${+opts[help]} )); then
@@ -87,8 +90,22 @@ fi
 
 readonly DISK_NAME_SUFFIX="$1"
 readonly MOUNT_POINT=$2
-readonly INSTANCE_NAME="$(hostname)"
+readonly INSTANCE_NAME="$HOST"
 readonly DISK_NAME="${INSTANCE_NAME}-${DISK_NAME_SUFFIX}"
+
+function quiet_unless_failure {
+	integer ret
+	() {
+		local outfile="$1"
+		shift
+		echo "$*" >> $outfile
+		"$@" >> $outfile 2>> $outfile || ret=$?
+		if [[ $ret -ne 0 ]]; then
+			cat $outfile
+		fi
+	} =(:) "$@"
+	return $ret
+}
 
 function get_homedir_for {
 	(cd ~$1; echo $PWD)
@@ -160,12 +177,12 @@ function release_lock {
 function unmount_listener {
 	set_purpose unmounter
 
-	inotifywait -t 0 -e unmount $MOUNT_POINT
+	quiet_unless_failure inotifywait -t 0 -e unmount $MOUNT_POINT
 
 	acquire_lock
 	{
-		gcloud compute instances detach-disk $INSTANCE_NAME --disk $DISK_NAME
-		gcloud compute disks delete $DISK_NAME
+		quiet_unless_failure gcloud compute instances detach-disk $INSTANCE_NAME --disk $DISK_NAME
+		quiet_unless_failure gcloud compute disks delete $DISK_NAME
 	} always {
 		release_lock
 	}
@@ -174,14 +191,14 @@ function unmount_listener {
 acquire_lock
 {
 	if ! disk_exists $DISK_NAME; then
-		gcloud compute disks create --size $opts[size] $DISK_NAME
+		quiet_unless_failure gcloud compute disks create --size $opts[size] $DISK_NAME
 	fi
 
 	readonly DISK_DEVICE=/dev/disk/by-id/google-$DISK_NAME
 
 	if [[ ! -e $DISK_DEVICE ]]; then
-		gcloud compute instances attach-disk $INSTANCE_NAME --disk $DISK_NAME --device-name $DISK_NAME
-		gcloud compute instances set-disk-auto-delete $INSTANCE_NAME --auto-delete --disk $DISK_NAME &!
+		quiet_unless_failure gcloud compute instances attach-disk $INSTANCE_NAME --disk $DISK_NAME --device-name $DISK_NAME
+		quiet_unless_failure gcloud compute instances set-disk-auto-delete $INSTANCE_NAME --auto-delete --disk $DISK_NAME &!
 	fi
 
 	if ! has_filesystem $DISK_DEVICE; then
@@ -196,7 +213,8 @@ acquire_lock
 	fi
 
 	if (( $+opts[chown] )); then
-		chown ${opts[chown]} $MOUNT_POINT
+		zmodload -F zsh/files +b:chown
+		chown -s ${opts[chown]} $MOUNT_POINT
 	fi
 } always {
 	release_lock

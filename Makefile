@@ -13,7 +13,7 @@ MAN_HTML := $(MAN_SOURCES:.ronn=.html)
 all: man
 
 clean:
-	$(RM) $(MAN_OUTS)
+	$(RM) $(MAN_OUTS) $(MAN_HTML)
 
 man: $(MAN_OUTS)
 

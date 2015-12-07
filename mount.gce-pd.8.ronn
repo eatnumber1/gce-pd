@@ -87,12 +87,16 @@ accesses to the mounted filesystem will hang.
 ## AUTHOR
 Written by [Russell Harmon].
 
+## REPORTING BUGS & CONTRIBUTING
+You can find us at our [github page].
+
 ## SEE ALSO
 mount(8), chmod(1), zshmodules(1), syslog(3), [`gcloud compute disks create`][gcloud compute disks create]
 
-[gcloud compute disks create]: https://cloud.google.com/sdk/gcloud/reference/compute/disks/create "gcloud compute disks create"
-[Russell Harmon]: http://rus.har.mn
-[GCE]: https://cloud.google.com/compute/
-[PD]: https://cloud.google.com/compute/docs/disks/
 [Automounter]: http://www.linux-consulting.com/Amd_AutoFS/autofs.html
+[GCE]: https://cloud.google.com/compute/
+[gcloud compute disks create]: https://cloud.google.com/sdk/gcloud/reference/compute/disks/create "gcloud compute disks create"
+[github page]: https://github.com/eatnumber1/gce-pd
+[PD]: https://cloud.google.com/compute/docs/disks/
+[Russell Harmon]: http://rus.har.mn
 [scopes]: https://cloud.google.com/compute/docs/api/how-tos/authorization

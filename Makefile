@@ -18,7 +18,7 @@ clean:
 man: $(MAN_OUTS)
 
 install: install-man
-	#$(INSTALL) -m 755 -g root -o root mount.gce-pd /sbin/mount.gce-pd
+	$(INSTALL) -m 755 -g root -o root mount.gce-pd /sbin/mount.gce-pd
 
 html: $(MAN_HTML)
 

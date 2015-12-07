@@ -80,6 +80,10 @@ documentation for the created filesystem type for additional information.
 
     media /mnt/media gce-pd.ext4 size=10GiB 0 0
 
+## NOTES
+If used with [Automounter], you must use the `syslog` mount option, otherwise
+accesses to the mounted filesystem will hang.
+
 ## AUTHOR
 Written by [Russell Harmon].
 

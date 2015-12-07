@@ -111,7 +111,9 @@ for more information about scopes in Google Cloud.</p>
 <dt class="flush"><code>-n</code></dt><dd><p>See the <code>-n</code> option in <span class="man-ref">mount<span class="s">(8)</span></span>.</p></dd>
 <dt><code>-o</code> <var>MOUNT_OPTIONS</var></dt><dd><p>Provide mount options. Options are specified with a <code>-o</code> flag followed by a
 comma separated string of options. Also see the section <a href="#MOUNT-OPTIONS" title="MOUNT OPTIONS" data-bare-link="true">MOUNT OPTIONS</a> and
-the <code>-o</code> option in <span class="man-ref">mount<span class="s">(8)</span></span>.</p></dd>
+the <code>-o</code> option in <span class="man-ref">mount<span class="s">(8)</span></span>.</p>
+
+<p><em>Note</em>: The <code>size</code> option is required.</p></dd>
 <dt class="flush"><code>-s</code></dt><dd><p>See the <code>-s</code> option in <span class="man-ref">mount<span class="s">(8)</span></span>.</p></dd>
 <dt><code>-t gce-pd.</code><var>FSTYPE</var></dt><dd><p>Declare the underlying filesystem to create on new persistent disks. <var>FSTYPE</var>
 must be a valid filesystem type which can be created using <code>mkfs.</code><var>FSTYPE</var>
@@ -129,9 +131,9 @@ accepts access modes in all valid <code>MODE</code> formats of <span class="man-
 accepts owner and group in all valid formats of <var>user-spec</var> as specified in
 <code>chown</code> in the <code>ZSH/FILES</code> section of <span class="man-ref">zshmodules<span class="s">(1)</span></span>.</p></dd>
 <dt class="flush"><code>help</code></dt><dd><p>Print usage information and exit.</p></dd>
-<dt><code>size=</code><var>SIZE</var></dt><dd><p>The size of the persistent disk. Accepts all values accepted by the <code>--size</code>
-option of <code>gcloud compute disks create</code>. See the
-<a href="https://cloud.google.com/sdk/gcloud/reference/compute/disks/create" title="gcloud compute disks create">gcloud documentation</a> for more information.</p></dd>
+<dt><code>size=</code><var>SIZE</var></dt><dd><p>The size of the persistent disk. <em>This option is required</em>. Accepts all
+values accepted by the <code>--size</code> option of <code>gcloud compute disks create</code>. See
+the <a href="https://cloud.google.com/sdk/gcloud/reference/compute/disks/create" title="gcloud compute disks create">gcloud documentation</a> for more information.</p></dd>
 <dt class="flush"><code>syslog</code></dt><dd><p>Log to <span class="man-ref">syslog<span class="s">(3)</span></span> instead of stderr.</p></dd>
 </dl>
 

@@ -10,12 +10,11 @@ See [mount.gce-pd(8)] for more information.
 In order to run `mount.gce-pd`, you must install:
 
  * [cURL]
- * [gcloud] (installed by default on default [Compute Engine][GCE] images)
+ * [gcloud] - installed by default on default [Compute Engine][GCE] images
  * [GNU Coreutils]
  * `mkfs.FSTYPE` for your chosen filesystem type
- * [inotify-tools] (for inotifywait)
- * [util-linux]
-   (for blkid)
+ * [inotify-tools] - for `inotifywait`
+ * [util-linux] - for `blkid`
  * [ZSH]
 
 ## Installation

@@ -6,6 +6,9 @@ conjunction with Linux's [Automounter], enabling on-demand scratch disks.
 
 See [mount.gce-pd(8)] for more information.
 
+## Installation
+Just run `sudo make install`.
+
 [Automounter]: http://www.linux-consulting.com/Amd_AutoFS/autofs.html
 [mount.gce-pd(8)]: http://eatnumber1.github.io/gce-pd/mount.gce-pd.8.html
 [PD]: https://cloud.google.com/compute/docs/disks/

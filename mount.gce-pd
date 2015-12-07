@@ -3,6 +3,10 @@ emulate -L zsh
 setopt err_exit warn_create_global no_unset
 #setopt xtrace
 
+# Many ZSH installations don't put sbin in the environment by default. Put it
+# there since many of our commands (mkfs.$FSTYPE) lives there.
+path+=( /sbin /usr/sbin /usr/local/sbin )
+
 readonly PROGNAME=$0
 readonly ARGS="$*"
 
@@ -65,7 +69,7 @@ function exec_logger {
 	exec command logger -i -t gce-pd "$@" 1>&- 2>&-
 }
 
-if (( $+syslog )); then
+if (( ${+opts[syslog]} )); then
 	exec 1> >(exec_logger -p user.info) 2> >(exec_logger -p user.warning) 0<&-
 fi
 
@@ -93,6 +97,7 @@ if (( ! $+fstype )); then
 	exit 1
 fi
 readonly FSTYPE="${fstype#*.}"
+unset fstype
 zmodload -F zsh/parameter +p:commands
 if (( ! ${+commands[mkfs.$FSTYPE]} )); then
 	echo "unable to find mkfs.$FSTYPE on PATH" >&2
@@ -184,7 +189,7 @@ zmodload -F zsh/system +b:zsystem
 
 function acquire_lock {
 	integer ret
-	zsystem flock -t 0 -f lockfd $LOCK_FILE || ret=$?
+	zsystem flock -t 1 -f lockfd $LOCK_FILE || ret=$?
 	if (( $ret == 2 )); then
 		debug "waiting to acquire exclusive lock on $LOCK_FILE"
 		zsystem flock -f lockfd $LOCK_FILE

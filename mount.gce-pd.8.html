@@ -134,6 +134,10 @@ option of <code>gcloud compute disks create</code>. See the
 </dl>
 
 
+<p>Any mount options not recognized by <code>mount.gce-pd</code> are passed to the mount
+command used to mount the created filesystem. See <span class="man-ref">mount<span class="s">(8)</span></span> and the
+documentation for the created filesystem type for additional information.</p>
+
 <h2 id="EXAMPLES">EXAMPLES</h2>
 
 <h3 id="command-line-use">command line use</h3>

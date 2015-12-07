@@ -10,6 +10,6 @@ See [mount.gce-pd(8)] for more information.
 Just run `sudo make install`.
 
 [Automounter]: http://www.linux-consulting.com/Amd_AutoFS/autofs.html
+[GCE]: https://cloud.google.com/compute/
 [mount.gce-pd(8)]: http://eatnumber1.github.io/gce-pd/mount.gce-pd.8.html
 [PD]: https://cloud.google.com/compute/docs/disks/
-[scopes]: https://cloud.google.com/compute/docs/api/how-tos/authorization

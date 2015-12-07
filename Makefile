@@ -29,5 +29,5 @@ install-man: $(MAN_OUTS)
 %: %.ronn
 	$(RONN) --pipe -r $< > $@
 
-%.html: %.ronn
+%.html: %.ronn index.txt
 	$(RONN) --pipe --style dark,print -5 $< > $@

@@ -67,7 +67,7 @@ for more information about scopes in Google Cloud.
    the [gcloud documentation][gcloud compute disks create] for more information.
 
  * `syslog`:
-   Log to syslog(3) instead of stderr.
+   Log to syslog(3) instead of stdout.
 
 Any mount options not recognized by `mount.gce-pd` are passed to the mount
 command used to mount the created filesystem. See mount(8) and the

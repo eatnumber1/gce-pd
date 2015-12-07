@@ -35,6 +35,8 @@ for more information about scopes in Google Cloud.
    comma separated string of options. Also see the section [MOUNT OPTIONS][] and
    the `-o` option in mount(8).
 
+   _Note_: The `size` option is required.
+
  * `-s`:
    See the `-s` option in mount(8).
 
@@ -60,9 +62,9 @@ for more information about scopes in Google Cloud.
    Print usage information and exit.
 
  * `size=`<SIZE>:
-   The size of the persistent disk. Accepts all values accepted by the `--size`
-   option of `gcloud compute disks create`. See the
-   [gcloud documentation][gcloud compute disks create] for more information.
+   The size of the persistent disk. _This option is required_. Accepts all
+   values accepted by the `--size` option of `gcloud compute disks create`. See
+   the [gcloud documentation][gcloud compute disks create] for more information.
 
  * `syslog`:
    Log to syslog(3) instead of stderr.

@@ -118,24 +118,24 @@ automatically create and delete these disks as needed, thereby reducing cost.</p
 <p>Because <code>mount.gce-pd</code> modifies persistent disks, it needs authorized
 credentials to do so. To provide those credentials, create your instance with
 the <code>https://www.googleapis.com/auth/compute</code> scope (aliased to <code>compute-rw</code> in
-the <code>gcloud</code> CLI). Read <a href="#SCOPES" title="SCOPES" data-bare-link="true">Authorizing Requests to Google Compute Engine</a>
+the <code>gcloud</code> CLI). Read <a href="https://cloud.google.com/compute/docs/api/how-tos/authorization">Authorizing Requests to Google Compute Engine</a>
 for more information about scopes in Google Cloud.</p>
 
 <h2 id="COMMAND-LINE-OPTIONS">COMMAND LINE OPTIONS</h2>
 
 <dl>
-<dt class="flush"><code>-f</code></dt><dd><p>See the <code>-f</code> option in <span class="man-ref">mount<span class="s">(8)</span></span>.</p></dd>
-<dt class="flush"><code>-n</code></dt><dd><p>See the <code>-n</code> option in <span class="man-ref">mount<span class="s">(8)</span></span>.</p></dd>
+<dt class="flush"><code>-f</code></dt><dd><p>See the <code>-f</code> option in <a class="man-ref" href="http://man7.org/linux/man-pages/man8/mount.8.html">mount<span class="s">(8)</span></a>.</p></dd>
+<dt class="flush"><code>-n</code></dt><dd><p>See the <code>-n</code> option in <a class="man-ref" href="http://man7.org/linux/man-pages/man8/mount.8.html">mount<span class="s">(8)</span></a>.</p></dd>
 <dt><code>-o</code> <var>MOUNT_OPTIONS</var></dt><dd><p>Provide mount options. Options are specified with a <code>-o</code> flag followed by a
 comma separated string of options. Also see the section <a href="#MOUNT-OPTIONS" title="MOUNT OPTIONS" data-bare-link="true">MOUNT OPTIONS</a> and
-the <code>-o</code> option in <span class="man-ref">mount<span class="s">(8)</span></span>.</p>
+the <code>-o</code> option in <a class="man-ref" href="http://man7.org/linux/man-pages/man8/mount.8.html">mount<span class="s">(8)</span></a>.</p>
 
 <p><em>Note</em>: The <code>size</code> option is required.</p></dd>
-<dt class="flush"><code>-s</code></dt><dd><p>See the <code>-s</code> option in <span class="man-ref">mount<span class="s">(8)</span></span>.</p></dd>
+<dt class="flush"><code>-s</code></dt><dd><p>See the <code>-s</code> option in <a class="man-ref" href="http://man7.org/linux/man-pages/man8/mount.8.html">mount<span class="s">(8)</span></a>.</p></dd>
 <dt><code>-t gce-pd.</code><var>FSTYPE</var></dt><dd><p>Declare the underlying filesystem to create on new persistent disks. <var>FSTYPE</var>
 must be a valid filesystem type which can be created using <code>mkfs.</code><var>FSTYPE</var>
 and mounted using <code>mount -t</code> <var>FSTYPE</var>.</p></dd>
-<dt class="flush"><code>-v</code></dt><dd><p>Enable verbose logging. Also see the <code>-v</code> option in <span class="man-ref">mount<span class="s">(8)</span></span>.</p></dd>
+<dt class="flush"><code>-v</code></dt><dd><p>Enable verbose logging. Also see the <code>-v</code> option in <a class="man-ref" href="http://man7.org/linux/man-pages/man8/mount.8.html">mount<span class="s">(8)</span></a>.</p></dd>
 </dl>
 
 
@@ -143,20 +143,20 @@ and mounted using <code>mount -t</code> <var>FSTYPE</var>.</p></dd>
 
 <dl>
 <dt><code>chmod=</code><var>MODE</var></dt><dd><p>Change access permissions on the mounted filesystem after creation. This
-accepts access modes in all valid <code>MODE</code> formats of <span class="man-ref">chmod<span class="s">(1)</span></span>.</p></dd>
+accepts access modes in all valid <code>MODE</code> formats of <a class="man-ref" href="http://man7.org/linux/man-pages/man1/chmod.1.html">chmod<span class="s">(1)</span></a>.</p></dd>
 <dt><code>chown=</code><var>OWNER</var>[:<var>GROUP</var>]</dt><dd><p>Change the owner and group of the mounted filesystem after creation. This
 accepts owner and group in all valid formats of <var>user-spec</var> as specified in
-<code>chown</code> in the <code>ZSH/FILES</code> section of <span class="man-ref">zshmodules<span class="s">(1)</span></span>.</p></dd>
+<code>chown</code> in the <code>ZSH/FILES</code> section of <a class="man-ref" href="http://zsh.sourceforge.net/Doc/Release/Zsh-Modules.html">zshmodules<span class="s">(1)</span></a>.</p></dd>
 <dt class="flush"><code>help</code></dt><dd><p>Print usage information and exit.</p></dd>
 <dt><code>size=</code><var>SIZE</var></dt><dd><p>The size of the persistent disk. <em>This option is required</em>. Accepts all
 values accepted by the <code>--size</code> option of <code>gcloud compute disks create</code>. See
 the <a href="https://cloud.google.com/sdk/gcloud/reference/compute/disks/create" title="gcloud compute disks create">gcloud documentation</a> for more information.</p></dd>
-<dt class="flush"><code>syslog</code></dt><dd><p>Log to <span class="man-ref">syslog<span class="s">(3)</span></span> instead of stdout.</p></dd>
+<dt class="flush"><code>syslog</code></dt><dd><p>Log to <a class="man-ref" href="http://man7.org/linux/man-pages/man3/syslog.3.html">syslog<span class="s">(3)</span></a> instead of stdout.</p></dd>
 </dl>
 
 
 <p>Any mount options not recognized by <code>mount.gce-pd</code> are passed to the mount
-command used to mount the created filesystem. See <span class="man-ref">mount<span class="s">(8)</span></span> and the
+command used to mount the created filesystem. See <a class="man-ref" href="http://man7.org/linux/man-pages/man8/mount.8.html">mount<span class="s">(8)</span></a> and the
 documentation for the created filesystem type for additional information.</p>
 
 <h2 id="EXAMPLES">EXAMPLES</h2>
@@ -186,7 +186,7 @@ accesses to the mounted filesystem will hang.</p>
 
 <h2 id="SEE-ALSO">SEE ALSO</h2>
 
-<p><span class="man-ref">mount<span class="s">(8)</span></span>, <span class="man-ref">chmod<span class="s">(1)</span></span>, <span class="man-ref">zshmodules<span class="s">(1)</span></span>, <span class="man-ref">syslog<span class="s">(3)</span></span>, <a href="https://cloud.google.com/sdk/gcloud/reference/compute/disks/create" title="gcloud compute disks create"><code>gcloud compute disks create</code></a></p>
+<p><a class="man-ref" href="http://man7.org/linux/man-pages/man8/mount.8.html">mount<span class="s">(8)</span></a>, <a class="man-ref" href="http://man7.org/linux/man-pages/man1/chmod.1.html">chmod<span class="s">(1)</span></a>, <a class="man-ref" href="http://zsh.sourceforge.net/Doc/Release/Zsh-Modules.html">zshmodules<span class="s">(1)</span></a>, <a class="man-ref" href="http://man7.org/linux/man-pages/man3/syslog.3.html">syslog<span class="s">(3)</span></a>, <a href="https://cloud.google.com/sdk/gcloud/reference/compute/disks/create" title="gcloud compute disks create"><code>gcloud compute disks create</code></a></p>
 
 
   <ol class='man-decor man-foot man foot'>

@@ -30,4 +30,4 @@ install-man: $(MAN_OUTS)
 	$(RONN) --pipe -r $< > $@
 
 %.html: %.ronn
-	$(RONN) --pipe -5 $< > $@
+	$(RONN) --pipe --style dark,print -5 $< > $@

@@ -61,6 +61,7 @@
     <a href="#COMMAND-LINE-OPTIONS">COMMAND LINE OPTIONS</a>
     <a href="#MOUNT-OPTIONS">MOUNT OPTIONS</a>
     <a href="#EXAMPLES">EXAMPLES</a>
+    <a href="#NOTES">NOTES</a>
     <a href="#AUTHOR">AUTHOR</a>
     <a href="#SEE-ALSO">SEE ALSO</a>
   </div>
@@ -99,7 +100,7 @@ automatically create and delete these disks as needed, thereby reducing cost.</p
 <p>Because <code>mount.gce-pd</code> modifies persistent disks, it needs authorized
 credentials to do so. To provide those credentials, create your instance with
 the <code>https://www.googleapis.com/auth/compute</code> scope (aliased to <code>compute-rw</code> in
-the <code>gcloud</code> CLI). Read <a href="#SCOPES" title="SCOPES" data-bare-link="true">Authorizing Requests to Google Compute Engine</a>
+the <code>gcloud</code> CLI). Read <a href="https://cloud.google.com/compute/docs/api/how-tos/authorization">Authorizing Requests to Google Compute Engine</a>
 for more information about scopes in Google Cloud.</p>
 
 <h2 id="COMMAND-LINE-OPTIONS">COMMAND LINE OPTIONS</h2>
@@ -149,6 +150,11 @@ documentation for the created filesystem type for additional information.</p>
 
 <pre><code>media /mnt/media gce-pd.ext4 size=10GiB 0 0
 </code></pre>
+
+<h2 id="NOTES">NOTES</h2>
+
+<p>If used with <a href="http://www.linux-consulting.com/Amd_AutoFS/autofs.html">Automounter</a>, you must use the <code>syslog</code> mount option, otherwise
+accesses to the mounted filesystem will hang.</p>
 
 <h2 id="AUTHOR">AUTHOR</h2>
 

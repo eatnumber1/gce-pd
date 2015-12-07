@@ -24,34 +24,29 @@ the `gcloud` CLI). Read [Authorizing Requests to Google Compute Engine][scopes]
 for more information about scopes in Google Cloud.
 
 ## COMMAND LINE OPTIONS
- * `-t gce-pd.`<FSTYPE>:
-   Declare the underlying filesystem to create on new persistent disks. <FSTYPE>
-   must be a valid filesystem type which can be created using `mkfs.`<FSTYPE>
-   and mounted using `mount -t` <FSTYPE>.
-
- * `-s`:
-   See the `-s` option in mount(8).
-
  * `-f`:
    See the `-f` option in mount(8).
 
  * `-n`:
    See the `-n` option in mount(8).
 
- * `-v`:
-   Enable verbose logging. Also see the `-v` option in mount(8).
-
  * `-o` <MOUNT_OPTIONS>:
    Provide mount options. Options are specified with a `-o` flag followed by a
    comma separated string of options. Also see the section [MOUNT OPTIONS][] and
    the `-o` option in mount(8).
 
-## MOUNT OPTIONS
- * `size=`<SIZE>:
-   The size of the persistent disk. Accepts all values accepted by the `--size`
-   option of `gcloud compute disks create`. See the
-   [gcloud documentation][gcloud compute disks create] for more information.
+ * `-s`:
+   See the `-s` option in mount(8).
 
+ * `-t gce-pd.`<FSTYPE>:
+   Declare the underlying filesystem to create on new persistent disks. <FSTYPE>
+   must be a valid filesystem type which can be created using `mkfs.`<FSTYPE>
+   and mounted using `mount -t` <FSTYPE>.
+
+ * `-v`:
+   Enable verbose logging. Also see the `-v` option in mount(8).
+
+## MOUNT OPTIONS
  * `chmod=`<MODE>:
    Change access permissions on the mounted filesystem after creation. This
    accepts access modes in all valid `MODE` formats of chmod(1).
@@ -61,11 +56,16 @@ for more information about scopes in Google Cloud.
    accepts owner and group in all valid formats of <user-spec> as specified in
    `chown` in the `ZSH/FILES` section of zshmodules(1).
 
- * `syslog`:
-   Log to syslog(3) instead of stderr.
-
  * `help`:
    Print usage information and exit.
+
+ * `size=`<SIZE>:
+   The size of the persistent disk. Accepts all values accepted by the `--size`
+   option of `gcloud compute disks create`. See the
+   [gcloud documentation][gcloud compute disks create] for more information.
+
+ * `syslog`:
+   Log to syslog(3) instead of stderr.
 
 ## EXAMPLES
 ### command line use

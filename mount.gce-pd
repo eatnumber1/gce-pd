@@ -69,7 +69,7 @@ function exec_logger {
 	exec command logger -i -t gce-pd "$@" 1>&- 2>&-
 }
 
-if (( $+syslog )); then
+if (( ${+opts[syslog]} )); then
 	exec 1> >(exec_logger -p user.info) 2> >(exec_logger -p user.warning) 0<&-
 fi
 
@@ -97,6 +97,7 @@ if (( ! $+fstype )); then
 	exit 1
 fi
 readonly FSTYPE="${fstype#*.}"
+unset fstype
 zmodload -F zsh/parameter +p:commands
 if (( ! ${+commands[mkfs.$FSTYPE]} )); then
 	echo "unable to find mkfs.$FSTYPE on PATH" >&2

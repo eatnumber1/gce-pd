@@ -11,45 +11,42 @@ function set_purpose {
 }
 set_purpose mounter
 
-function exec_logger {
-	exec command logger -i -t gce-pd "$@" 1>&- 2>&-
-}
-
-if [[ ! -t 1 ]]; then
-	exec 1> >(exec_logger -p user.info) 2> >(exec_logger -p user.warning) 0<&-
-fi
-
-readonly FSTYPE=ext4
-
-# TODO(eatnumber1): Check why my path doesn't have this already.
-path+=( /sbin /usr/sbin /usr/local/sbin )
-
-typeset -a opts_arg
 typeset -A opts
 
 zmodload -F zsh/zutil +b:zparseopts
-zparseopts -D -E o:=opts_arg
+zparseopts -A opts -D -E -K -M o+:=opts_arg s f=fake n v=verbose t:=fstype
+unset "opts[-o]"
+unset "opts[-t]"
 
-() {
-	local opt
-	for opt in "${(s:,:@)opts_arg[2]}"; do
-		typeset -a opt_ary
-		opt_ary=( "${(s:=:@)opt}" )
-		if [[ ${#opt_ary} == 1 ]]; then
-			opt_ary+=( "" )
-		fi
-		opts+=( "${opt_ary[@]}" )
-	done
-}
+if (( $+opts_arg )); then
+	() {
+		local optarg
+		local i
+		for (( i=2; i<=${#opts_arg}; i+=2 )); do
+			for opt in "${(s:,:@)opts_arg[$i]}"; do
+				typeset -a opt_ary
+				opt_ary=( "${(s:=:@)opt}" )
+				if [[ ${#opt_ary} == 1 ]]; then
+					opt_ary+=( "" )
+				fi
+				opts+=( "${opt_ary[@]}" )
+			done
+		done
+	}
 
-unset opts_arg
+	unset opts_arg
+fi
 
 typeset -a mount_args
 () {
 	typeset -a mount_opts
 	for key in "${(k@)opts}"; do
 		case $key in
-			size|help|type|chmod|chown) ;;
+			size|help|chmod|chown|syslog) ;;
+			-*)
+				mount_opts+=( "$key" )
+				unset "opts[$key]"
+				;;
 			*)
 				typeset -a optarg
 				optarg=( "$key" ${opts[$key]} )
@@ -64,8 +61,26 @@ typeset -a mount_args
 	fi
 }
 
+function exec_logger {
+	exec command logger -i -t gce-pd "$@" 1>&- 2>&-
+}
+
+if (( $+syslog )); then
+	exec 1> >(exec_logger -p user.info) 2> >(exec_logger -p user.warning) 0<&-
+fi
+
+if (( $+verbose )); then
+	function debug {
+		echo "$@"
+	}
+else
+	function debug {}
+fi
+
 function usage {
-	echo "Usage: $0 [-o help,size=size,type=type,chmod=mode,chown=owner,...] disk_name mountpoint"
+	echo "Usage: $0 disk_name mountpoint [-sfnv] -o size=size[,OTHER_OPTIONS]"
+	echo
+	echo "See mount.gce-pd(8) or https://github.com/eatnumber1/gce-pd for more information."
 }
 
 if (( ${+opts[help]} )); then
@@ -73,13 +88,24 @@ if (( ${+opts[help]} )); then
 	exit
 fi
 
-if [[ $USERNAME != root ]]; then
-	echo "Must be run as root" >&2
+if (( ! $+fstype )); then
+	echo "a subtype must be provided" >&2
+	exit 1
+fi
+readonly FSTYPE="${fstype#*.}"
+zmodload -F zsh/parameter +p:commands
+if (( ! ${+commands[mkfs.$FSTYPE]} )); then
+	echo "unable to find mkfs.$FSTYPE on PATH" >&2
 	exit 1
 fi
 
 if [[ $# -ne 2 ]]; then
 	usage >&2
+	exit 1
+fi
+
+if [[ $USERNAME != root ]]; then
+	echo "Must be run as root" >&2
 	exit 1
 fi
 
@@ -93,38 +119,28 @@ readonly MOUNT_POINT=$2
 readonly INSTANCE_NAME="$HOST"
 readonly DISK_NAME="${INSTANCE_NAME}-${DISK_NAME_SUFFIX}"
 
-function quiet_unless_failure {
-	integer ret
-	() {
-		local outfile="$1"
-		shift
-		echo "$*" >> $outfile
-		"$@" >> $outfile 2>> $outfile || ret=$?
-		if [[ $ret -ne 0 ]]; then
-			cat $outfile
-		fi
-	} =(:) "$@"
-	return $ret
-}
-
-function get_homedir_for {
-	(cd ~$1; echo $PWD)
-}
-
-function as_user_do {
-	setopt err_return
-	(
-		USERNAME=$1
-		shift
-		pushd ~$USERNAME
-		HOME=$PWD
-		popd
-		exec "$@"
-	)
-}
+if (( $+verbose )); then
+	function quiet_unless_failure {
+		"$@"
+	}
+else
+	function quiet_unless_failure {
+		integer ret
+		() {
+			local outfile="$1"
+			shift
+			echo "$*" >> $outfile
+			"$@" >> $outfile 2>> $outfile || ret=$?
+			if [[ $ret -ne 0 ]]; then
+				cat $outfile
+			fi
+		} =(:) "$@"
+		return $ret
+	}
+fi
 
 function gcloud {
-	as_user_do gcloudadm command gcloud --quiet "$@"
+	command gcloud --quiet "$@"
 }
 
 function get_metadata {
@@ -167,7 +183,14 @@ integer lockfd
 zmodload -F zsh/system +b:zsystem
 
 function acquire_lock {
-	zsystem flock -f lockfd $LOCK_FILE
+	integer ret
+	zsystem flock -t 0 -f lockfd $LOCK_FILE || ret=$?
+	if (( $ret == 2 )); then
+		debug "waiting to acquire exclusive lock on $LOCK_FILE"
+		zsystem flock -f lockfd $LOCK_FILE
+	elif (( $ret != 0 )); then
+		return $ret
+	fi
 }
 
 function release_lock {
@@ -177,11 +200,14 @@ function release_lock {
 function unmount_listener {
 	set_purpose unmounter
 
+	debug "waiting for unmount"
 	quiet_unless_failure inotifywait -t 0 -e unmount $MOUNT_POINT
 
 	acquire_lock
 	{
+		debug "detaching disk $DISK_NAME"
 		quiet_unless_failure gcloud compute instances detach-disk $INSTANCE_NAME --disk $DISK_NAME
+		debug "deleting disk $DISK_NAME"
 		quiet_unless_failure gcloud compute disks delete $DISK_NAME
 	} always {
 		release_lock
@@ -190,29 +216,54 @@ function unmount_listener {
 
 acquire_lock
 {
-	if ! disk_exists $DISK_NAME; then
+	debug "checking if disk \"$DISK_NAME\" exists"
+	if disk_exists $DISK_NAME; then
+		debug "disk exists"
+	else
+		debug "creating disk \"$DISK_NAME\""
 		quiet_unless_failure gcloud compute disks create --size $opts[size] $DISK_NAME
 	fi
 
 	readonly DISK_DEVICE=/dev/disk/by-id/google-$DISK_NAME
 
-	if [[ ! -e $DISK_DEVICE ]]; then
+	debug "checking if disk \"$DISK_NAME\" is attached to \"$INSTANCE_NAME\""
+	if [[ -e $DISK_DEVICE ]]; then
+		debug "already attached at $DISK_DEVICE"
+	else
+		debug "attaching disk \"$DISK_NAME\" to \"$INSTANCE_NAME\""
 		quiet_unless_failure gcloud compute instances attach-disk $INSTANCE_NAME --disk $DISK_NAME --device-name $DISK_NAME
 		quiet_unless_failure gcloud compute instances set-disk-auto-delete $INSTANCE_NAME --auto-delete --disk $DISK_NAME &!
 	fi
 
-	if ! has_filesystem $DISK_DEVICE; then
-		mkfs.$FSTYPE -q -F $DISK_DEVICE
+	debug "checking if $DISK_DEVICE is formatted with $FSTYPE"
+	if has_filesystem $DISK_DEVICE; then
+		debug "already formatted"
+	else
+		debug "creating $FSTYPE filesystem on $DISK_DEVICE"
+		declare -a mkfs_opts
+		if (( ! $+verbose )); then
+			mkfs_opts+=( -q )
+		fi
+		mkfs.$FSTYPE "${mkfs_opts[@]}" -F $DISK_DEVICE
 	fi
 
+	debug "mounting $DISK_DEVICE on $MOUNT_POINT as $FSTYPE"
 	mount -t $FSTYPE "${mount_args[@]}" $DISK_DEVICE $MOUNT_POINT
-	unmount_listener &!
+	if (( ! $+fake )); then
+		unmount_listener &!
+	fi
 
 	if (( $+opts[chmod] )); then
-		chmod ${opts[chmod]} $MOUNT_POINT
+		debug "changing mode of $MOUNT_POINT to ${opts[chmod]}"
+		declare -a chmod_opts
+		if (( $+verbose )); then
+			chmod_opts+=( -v )
+		fi
+		chmod "${chmod_opts[@]}" ${opts[chmod]} $MOUNT_POINT
 	fi
 
 	if (( $+opts[chown] )); then
+		debug "changing owner of $MOUNT_POINT to ${opts[chown]}"
 		zmodload -F zsh/files +b:chown
 		chown -s ${opts[chown]} $MOUNT_POINT
 	fi

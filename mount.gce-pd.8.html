@@ -94,7 +94,7 @@
 <p>This is a tool designed to be used as a file system type on Linux machines
 running on <a href="https://cloud.google.com/compute/">Google Compute Engine</a>. It allows on-mount creation of
 <a href="https://cloud.google.com/compute/docs/disks/">Persistent Disks</a> and on-unmount deletion of them. This can then be used in
-conjunction with Linux's <a href="http://www.linux-consulting.com/Amd_AutoFS/autofs.html">Automounter</a>, enabling on-demand scratch disks.</p>
+conjunction with Linux's <a href="http://www.linux-consulting.com/Amd_AutoFS/autofs.html">Automount</a>, enabling on-demand scratch disks.</p>
 
 <h2 id="USES">USES</h2>
 
@@ -107,7 +107,7 @@ automatically create and delete these disks as needed, thereby reducing cost.</p
 <p>Because <code>mount.gce-pd</code> modifies persistent disks, it needs authorized
 credentials to do so. To provide those credentials, create your instance with
 the <code>https://www.googleapis.com/auth/compute</code> scope (aliased to <code>compute-rw</code> in
-the <code>gcloud</code> CLI). Read <a href="https://cloud.google.com/compute/docs/api/how-tos/authorization">Authorizing Requests to Google Compute Engine</a>
+the <code>gcloud</code> CLI). Read <a href="#SCOPES" title="SCOPES" data-bare-link="true">Authorizing Requests to Google Compute Engine</a>
 for more information about scopes in Google Cloud.</p>
 
 <h2 id="COMMAND-LINE-OPTIONS">COMMAND LINE OPTIONS</h2>
@@ -162,8 +162,23 @@ documentation for the created filesystem type for additional information.</p>
 
 <h2 id="NOTES">NOTES</h2>
 
-<p>If used with <a href="http://www.linux-consulting.com/Amd_AutoFS/autofs.html">Automounter</a>, you must use the <code>syslog</code> mount option, otherwise
-accesses to the mounted filesystem will hang.</p>
+<h3 id="Use-with-Automount">Use with Automount</h3>
+
+<ol>
+<li>You must use the <code>syslog</code> mount option, otherwise accesses to the mounted
+filesystem will hang.</li>
+<li><p>If <a href="https://cloud.google.com/monitoring/">Google Cloud Monitoring</a>'s <a href="https://cloud.google.com/monitoring/agent/index">Stackdriver Agent</a> is
+used, you must configure the agent to ignore automounted directories,
+otherwise those directories will never unmount. This can be accomplished by
+putting the following in
+<code>/opt/stackdriver/collectd/etc/collectd.d/&lt;SOME_NAME>.conf</code>:</p>
+
+<pre><code>&lt;Plugin "df"&gt;
+  MountPoint "/path/to/automounted/directory"
+&lt;/Plugin&gt;
+</code></pre></li>
+</ol>
+
 
 <h2 id="AUTHOR">AUTHOR</h2>
 

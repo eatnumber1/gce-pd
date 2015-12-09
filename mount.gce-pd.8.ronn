@@ -9,7 +9,7 @@ mount.gce-pd(8) - create and mount a persistent disk, deleting on unmount
 This is a tool designed to be used as a file system type on Linux machines
 running on [Google Compute Engine][GCE]. It allows on-mount creation of
 [Persistent Disks][PD] and on-unmount deletion of them. This can then be used in
-conjunction with Linux's [Automounter], enabling on-demand scratch disks.
+conjunction with Linux's [Automount], enabling on-demand scratch disks.
 
 ## USES
 Since Compute Engine charges for disk use on a per-gigabyte basis, if you have
@@ -83,8 +83,18 @@ documentation for the created filesystem type for additional information.
     media /mnt/media gce-pd.ext4 size=10GiB 0 0
 
 ## NOTES
-If used with [Automounter], you must use the `syslog` mount option, otherwise
-accesses to the mounted filesystem will hang.
+### Use with Automount
+1. You must use the `syslog` mount option, otherwise accesses to the mounted
+   filesystem will hang.
+2. If [Google Cloud Monitoring][GCM]'s [Stackdriver Agent][stackdriver] is
+   used, you must configure the agent to ignore automounted directories,
+   otherwise those directories will never unmount. This can be accomplished by
+   putting the following in
+   `/opt/stackdriver/collectd/etc/collectd.d/<SOME_NAME>.conf`:
+
+       <Plugin "df">
+         MountPoint "/path/to/automounted/directory"
+       </Plugin>
 
 ## AUTHOR
 Written by [Russell Harmon].
@@ -95,10 +105,12 @@ You can find us at our [github page].
 ## SEE ALSO
 mount(8), chmod(1), zshmodules(1), syslog(3), [`gcloud compute disks create`][gcloud compute disks create]
 
-[Automounter]: http://www.linux-consulting.com/Amd_AutoFS/autofs.html
+[Automount]: http://www.linux-consulting.com/Amd_AutoFS/autofs.html
 [GCE]: https://cloud.google.com/compute/
+[GCM]: https://cloud.google.com/monitoring/
 [gcloud compute disks create]: https://cloud.google.com/sdk/gcloud/reference/compute/disks/create "gcloud compute disks create"
 [github page]: https://github.com/eatnumber1/gce-pd
 [PD]: https://cloud.google.com/compute/docs/disks/
 [Russell Harmon]: http://rus.har.mn
 [scopes]: https://cloud.google.com/compute/docs/api/how-tos/authorization
+[stackdriver]: https://cloud.google.com/monitoring/agent/index

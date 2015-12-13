@@ -45,6 +45,8 @@ for more information about scopes in Google Cloud.
    must be a valid filesystem type which can be created using `mkfs.`<FSTYPE>
    and mounted using `mount -t` <FSTYPE>.
 
+   _Note_: This option is required.
+
  * `-v`:
    Enable verbose logging. Also see the `-v` option in mount(8).
 
@@ -62,9 +64,11 @@ for more information about scopes in Google Cloud.
    Print usage information and exit.
 
  * `size=`<SIZE>:
-   The size of the persistent disk. _This option is required_. Accepts all
-   values accepted by the `--size` option of `gcloud compute disks create`. See
-   the [gcloud documentation][gcloud compute disks create] for more information.
+   The size of the persistent disk. Accepts all values accepted by the `--size`
+   option of `gcloud compute disks create`. See the
+   [gcloud documentation][gcloud compute disks create] for more information.
+
+   _Note_: This option is required_.
 
  * `syslog`:
    Log to syslog(3) instead of stdout.

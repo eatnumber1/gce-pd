@@ -3,17 +3,17 @@ emulate -L zsh
 setopt err_exit warn_create_global no_unset
 #setopt xtrace
 
+function set_purpose {
+	jobs -Z "${PROGNAME}[$1] $ARGS"
+}
+set_purpose mounter
+
 # Many ZSH installations don't put sbin in the environment by default. Put it
 # there since many of our commands (mkfs.$FSTYPE) lives there.
 path+=( /sbin /usr/sbin /usr/local/sbin )
 
 readonly PROGNAME=$0
 readonly ARGS="$*"
-
-function set_purpose {
-	jobs -Z "${PROGNAME}[$1] $ARGS"
-}
-set_purpose mounter
 
 typeset -A opts
 
@@ -204,6 +204,13 @@ function release_lock {
 
 function unmount_listener {
 	set_purpose unmounter
+
+	# We could just use the loggers inherited from our parent, but since our
+	# parent is about to exit and both us and our loggers get reparented to 1,
+	# it looks a little odd in ps.
+	if (( ${+opts[syslog]} )); then
+		exec 1> >(exec_logger -p user.info) 2> >(exec_logger -p user.warning) 0<&-
+	fi
 
 	debug "waiting for unmount"
 	quiet_unless_failure inotifywait -t 0 -e unmount $MOUNT_POINT

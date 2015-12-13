@@ -68,7 +68,7 @@ for more information about scopes in Google Cloud.
    option of `gcloud compute disks create`. See the
    [gcloud documentation][gcloud compute disks create] for more information.
 
-   _Note_: This option is required_.
+   _Note_: This option is required.
 
  * `syslog`:
    Log to syslog(3) instead of stdout.

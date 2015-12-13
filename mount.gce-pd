@@ -3,6 +3,9 @@ emulate -L zsh
 setopt err_exit warn_create_global no_unset
 #setopt xtrace
 
+readonly PROGNAME=$0
+readonly ARGS="$*"
+
 function set_purpose {
 	jobs -Z "${PROGNAME}[$1] $ARGS"
 }
@@ -11,9 +14,6 @@ set_purpose mounter
 # Many ZSH installations don't put sbin in the environment by default. Put it
 # there since many of our commands (mkfs.$FSTYPE) lives there.
 path+=( /sbin /usr/sbin /usr/local/sbin )
-
-readonly PROGNAME=$0
-readonly ARGS="$*"
 
 typeset -A opts
 
